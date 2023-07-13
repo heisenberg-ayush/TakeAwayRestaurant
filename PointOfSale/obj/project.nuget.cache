@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "I4ALLRp2ZKKt7ZBs2KjGkmkGMMA0kO1bN9HbDBnviyBLwlAY2TpWRQXpwb2YgwShWG+9bkAhFE826dobuHOM9w==",
+  "dgSpecHash": "JycsFTOkFW+BRlTkHFH2b8v1IgR17Bbmmvcfpuk42Z2Zkm/udR7T7HXn3Vk7RYQgw5hMN/91dIKoRpa/0Y4xMA==",
   "success": true,
   "projectFilePath": "C:\\Users\\Heisenberg-Ayush\\source\\repos\\PointOfSale\\PointOfSale\\PointOfSale.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Heisenberg-Ayush\\.nuget\\packages\\azure.core\\1.25.0\\azure.core.1.25.0.nupkg.sha512",
     "C:\\Users\\Heisenberg-Ayush\\.nuget\\packages\\azure.identity\\1.7.0\\azure.identity.1.7.0.nupkg.sha512",
+    "C:\\Users\\Heisenberg-Ayush\\.nuget\\packages\\dapper\\2.0.143\\dapper.2.0.143.nupkg.sha512",
     "C:\\Users\\Heisenberg-Ayush\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Heisenberg-Ayush\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\1.1.1\\microsoft.bcl.asyncinterfaces.1.1.1.nupkg.sha512",
     "C:\\Users\\Heisenberg-Ayush\\.nuget\\packages\\microsoft.csharp\\4.5.0\\microsoft.csharp.4.5.0.nupkg.sha512",
