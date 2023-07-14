@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Dapper;
+using Microsoft.AspNetCore.Mvc;
 using PointOfSale.Models;
 using System.Data.SqlClient;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -20,160 +21,122 @@ namespace PointOfSale.Controllers
 
         // GET: api/<ProductTypeController>
         [HttpGet]
-        public IEnumerable<ProductTypeResponse> GetProductType()
+        public async Task<IActionResult> GetProductType()
         {
-            var productTypeList = new List<ProductTypeResponse>();
-
             // Establish a connection to the database
             SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString());
-            conn.Open();
 
-            // Prepare the SQL query to retrieve all registered users
-            var query = "SELECT ProductTypeID, ProductTypeName FROM ProductType";
+            var sql = @"SELECT [ProductTypeID]
+                              ,[ProductTypeName]
+                          FROM [Lazzatt].[dbo].[ProductType]";
 
-            using (var command = new SqlCommand(query, conn))
-            {
-                // Execute the query and retrieve the usernames
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        // Add each username to the list
-                        ProductTypeResponse op = new ProductTypeResponse
-                        {
-                            ProductTypeID = (int)reader["ProductTypeID"],
-                            ProductTypeName = reader["ProductTypeName"].ToString()
-                        };
-
-                        productTypeList.Add(op);
-                    }
-                }
-            }
-            return productTypeList;
+            var productTypeList = await conn.QueryAsync<ProductTypeResponse>(sql);
+            return Ok(productTypeList);
         }
 
         // GET api/<ProductController>/5
         // get all products with the given productTypeId
 
         [HttpGet("{id}")]
-        public IEnumerable<ProductResponse> GetProduct(int id)
+        public async Task<IActionResult> GetProduct(int id)
         {
             var productList = new List<ProductResponse>();
 
             // Establish a connection to the database
             SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString());
-            conn.Open();
+            var sql = @"SELECT [ProductID]
+                              ,[ProductName]
+                              ,[ProductTypeID]
+                              ,[Rate]
+                              ,[ProductImage]
+                          FROM [Lazzatt].[dbo].[Product]
+                          WHERE ProductTypeID = @ID";
+            // Execute the query and retrieve the products using Dapper
+            productList = conn.Query<ProductResponse>(sql, new { ID = id }).ToList();
 
-            // Prepare the SQL query to retrieve all registered users
-            var query = "SELECT ProductID, ProductName, ProductTypeID, ProductImage, rate FROM Product WHERE ProductTypeID = @ID";
-
-            using (var command = new SqlCommand(query, conn))
-            {
-                // Set the parameters for the query
-                command.Parameters.AddWithValue("@ID", id);
-
-                // Execute the query and retrieve the products
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        // Add each product to the list
-                        ProductResponse op = new ProductResponse
-                        {
-                            ProductID = (int)reader["ProductID"],
-                            ProductName = reader["ProductName"].ToString(),
-                            ProductTypeID = (int)reader["ProductTypeID"],
-                            ProductImage = reader["ProductImage"].ToString(),
-                            rate = (decimal)reader["rate"]
-                        };
-
-                        productList.Add(op);
-                    }
-                }
-            }
-            return productList;
+            return Ok(productList);
         }
 
         // POST api/<ProductTypeController>
         [HttpPost]
-        public string Post(ProductType productType)
+        public async Task<IActionResult> PostType(ProductType productType)
         {
             SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString());
 
-            var query = "INSERT INTO ProductType (ProductTypeName, Description, DontShowOnSite, WebSiteDisPlayOrder, ProducTypeImage, OfferTitle, OfferPercent, ProductCategoryID) VALUES (@Name, @Description, @DontShowOnSite, @WebSiteDisPlayOrder, @Image, @OfferTitle, @OfferPercent, @Category)";
+            var sql = @"INSERT INTO [Lazzatt].[dbo].[ProductType]
+                                ([ProductTypeName]
+                              ,[Description]
+                              ,[DontShowOnSite]
+                              ,[WebSiteDisPlayOrder]
+                              ,[ProducTypeImage]
+                              ,[OfferTitle]
+                              ,[OfferPercent]
+                              ,[ProductCategoryID])
+                        VALUES (@ProductTypeName, @Description, @DontShowOnSite, @WebSiteDisPlayOrder, @ProducTypeImage, @OfferTitle, @OfferPercent, @ProductCategoryID)";
 
-            using (var command = new SqlCommand(query, conn))
+            var newProductType = new ProductType()
             {
-                // Set the parameters for the query
-                command.Parameters.AddWithValue("@Name", productType.ProductTypeName);
-                command.Parameters.AddWithValue("@Description", productType.Description);
-                command.Parameters.AddWithValue("@DontShowOnSite", productType.DontShowOnSite);
-                command.Parameters.AddWithValue("@WebSiteDisPlayOrder", productType.WebSiteDisPlayOrder);
-                command.Parameters.AddWithValue("@Image", productType.ProducTypeImage);
-                command.Parameters.AddWithValue("@OfferTitle", productType.OfferTitle);
-                command.Parameters.AddWithValue("@OfferPercent", productType.OfferPercent);
-                command.Parameters.AddWithValue("@Category", productType.ProductCategoryID);
+                ProductTypeName = productType.ProductTypeName,
+                Description = productType.Description,
+                DontShowOnSite = productType.DontShowOnSite,
+                WebSiteDisPlayOrder = productType.WebSiteDisPlayOrder,
+                ProducTypeImage = productType.ProducTypeImage,
+                OfferTitle = productType.OfferTitle,
+                OfferPercent = productType.OfferPercent,
+                ProductCategoryID = productType.ProductCategoryID
+            };
 
-                // Execute the query and retrieve the inserted product ID
-                conn.Open();
-                int insertedProductId = Convert.ToInt32(command.ExecuteScalar());
-
-                conn.Close();
-                return "Data Inserted";
-            }
+            var result = await conn.ExecuteAsync(sql, newProductType);
+            return Ok("Data Inserted");
         }
 
         // PUT api/<ProductTypeController>/5
         [HttpPut("{id}")]
-        public ActionResult<ProductTypeResponse> UpdateProductType(int id, ProductType productType)
+        public async Task<IActionResult> UpdateProductType(int id, ProductType productType)
         {
             // Check if the product exists with the given ID
             bool productExists = CheckIfProductTypeExists(id);
 
             if (!productExists)
             {
-                return NotFound();
+                return NotFound("Type not Found");
             }
 
             // Establish a connection to the database
             using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
             {
-                conn.Open();
+                var sql = @"UPDATE [Lazzatt].[dbo].[ProductType] 
+                                     SET ProductTypeName = @ProductTypeName,
+                                         Description = @Description,
+                                         DontShowOnSite = @DontShowOnSite,
+                                         WebSiteDisPlayOrder = @WebSiteDisPlayOrder,
+                                         ProducTypeImage = @ProducTypeImage,
+                                         OfferTitle = @OfferTitle,
+                                         OfferPercent = @OfferPercent,
+                                         ProductCategoryID = @ProductCategoryID
+                                     WHERE ProductTypeID = @ProductTypeID";
 
-                // Prepare the SQL query to update the product
-                var query = "UPDATE ProductType SET ProductTypeName = @ProductTypeName, Description = @Description, DontShowOnSite = @DontShowOnSite, WebSiteDisPlayOrder = @WebSiteDisPlayOrder, ProducTypeImage = @ProducTypeImage, OfferTitle = @OfferTitle, OfferPercent = @OfferPercent, ProductCategoryID = @ProductCategoryID WHERE ProductTypeID = @ID";
-
-                using (var command = new SqlCommand(query, conn))
+                var newProductType = new ProductType()
                 {
-                    // Set the parameters for the query
-                    command.Parameters.AddWithValue("@ProductTypeName", productType.ProductTypeName);
-                    command.Parameters.AddWithValue("@Description", productType.Description);
-                    command.Parameters.AddWithValue("@DontShowOnSite", productType.DontShowOnSite);
-                    command.Parameters.AddWithValue("@WebSiteDisPlayOrder", productType.WebSiteDisPlayOrder);
-                    command.Parameters.AddWithValue("@ProducTypeImage", productType.ProducTypeImage);
-                    command.Parameters.AddWithValue("@OfferTitle", productType.OfferTitle);
-                    command.Parameters.AddWithValue("@OfferPercent", productType.OfferPercent);
-                    command.Parameters.AddWithValue("@ProductCategoryID", productType.ProductCategoryID);
-                    command.Parameters.AddWithValue("@ID", id);
+                    ProductTypeName = productType.ProductTypeName,
+                    Description = productType.Description,
+                    DontShowOnSite = productType.DontShowOnSite,
+                    WebSiteDisPlayOrder = productType.WebSiteDisPlayOrder,
+                    ProducTypeImage = productType.ProducTypeImage,
+                    OfferTitle = productType.OfferTitle,
+                    OfferPercent = productType.OfferPercent,
+                    ProductCategoryID = productType.ProductCategoryID,
+                    ProductTypeID = id
+                };
 
-                    // Execute the update query
-                    command.ExecuteNonQuery();
-                }
+                var result = await conn.ExecuteAsync(sql, newProductType);
             }
-
-            // Return the updated product
-            var updatedProduct = new ProductTypeResponse
-            {
-                ProductTypeID = id,
-                ProductTypeName = productType.ProductTypeName
-        };
-
-            return Ok(updatedProduct);
+            return Ok("Data Updated");
         }
 
         // DELETE api/<ProductTypeController>/5
         [HttpDelete("{id}")]
-        public ActionResult DeleteProductType(int id)
+        public async Task<IActionResult> DeleteProductType(int id)
         {
             // Check if the product exists with the given ID
             bool productExists = CheckIfProductTypeExists(id);
@@ -186,22 +149,12 @@ namespace PointOfSale.Controllers
             // Establish a connection to the database
             using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
             {
-                conn.Open();
+                var sql = @"DELETE FROM [Lazzatt].[dbo].[Product]
+                               WHERE ProductTypeID = @ProductTypeID";
 
-                // Prepare the SQL query to delete the product
-                var query = "DELETE FROM ProductType WHERE ProductTypeID = @ID";
-
-                using (var command = new SqlCommand(query, conn))
-                {
-                    // Set the parameter for the query
-                    command.Parameters.AddWithValue("@ID", id);
-
-                    // Execute the delete query
-                    command.ExecuteNonQuery();
-                }
+                var result = await conn.ExecuteAsync(sql, new { ProductTypeID = id });
             }
-
-            return NoContent();
+            return Ok("Product Deleted");
         }
 
         // Helper method to check if the productType exists with the given ID

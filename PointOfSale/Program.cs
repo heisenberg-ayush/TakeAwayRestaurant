@@ -12,7 +12,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DataContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("PointOfSale"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Lazzat"));
 });
 
 var app = builder.Build();

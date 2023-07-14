@@ -60,6 +60,10 @@ namespace PointOfSale.Controllers
                             // Valid credentials
                             return true;
                         }
+                        else
+                        {
+                            return false;
+                        }
                     }
                 }
             }
