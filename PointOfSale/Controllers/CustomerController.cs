@@ -194,7 +194,7 @@ namespace PointOfSale.Controllers
 
             var newCustomer = new Customer()
             {
-                CustomerId = id,
+                CustomerID = id,
                 CustomerName = customer.CustomerName,
                 CustomerMobile = customer.CustomerMobile,
                 GSTIN = customer.GSTIN,
@@ -268,7 +268,6 @@ namespace PointOfSale.Controllers
                 return StatusCode((int)statusCode, errorMessage);
             }
         }
-
 
         private async Task<bool> CheckIfCustomerExistsAsync(int id)
         {

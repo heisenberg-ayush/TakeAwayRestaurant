@@ -2,7 +2,7 @@
 {
     public class Customer
     {
-        public int CustomerId { get; set; }
+        public int CustomerID { get; set; }
         public string CustomerName { get; set; }
         public string CustomerMobile { get; set; }
         public string GSTIN { get; set; }
@@ -26,13 +26,5 @@
         public int CustomerType { get; set; }
         public int FCMToken { get; set; }
         public int IsOnlineCustomer { get; set; }
-
-
-    }
-    public enum GenderEnum
-    {
-        Male,
-        Female,
-        Other
     }
 }
