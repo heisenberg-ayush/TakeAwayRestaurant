@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PointOfSale.Models;
 using System.Data.SqlClient;
+using System.Net;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -23,16 +24,31 @@ namespace PointOfSale.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProductType()
         {
-            // Establish a connection to the database
-            SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString());
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
+                {
+                    var sql = @"SELECT [ProductTypeID], [ProductTypeName]
+                        FROM [Lazzatt].[dbo].[ProductType]";
 
-            var sql = @"SELECT [ProductTypeID]
-                              ,[ProductTypeName]
-                          FROM [Lazzatt].[dbo].[ProductType]";
+                    var productTypeList = await conn.QueryAsync<ProductTypeResponse>(sql);
 
-            var productTypeList = await conn.QueryAsync<ProductTypeResponse>(sql);
-            return Ok(productTypeList);
+                    return Ok(productTypeList);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception and return an error response
+                string errorMessage = "An error occurred while retrieving the product types";
+                HttpStatusCode statusCode = HttpStatusCode.InternalServerError;
+
+                // Additional error handling logic if needed
+                // For example, you can log the error or provide more specific error messages based on the exception type
+
+                return StatusCode((int)statusCode, errorMessage);
+            }
         }
+
 
         // GET api/<ProductController>/5
         // get all products with the given productTypeId
@@ -40,148 +56,201 @@ namespace PointOfSale.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProduct(int id)
         {
-            var productList = new List<ProductResponse>();
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
+                {
+                    var sql = @"SELECT [ProductID], [ProductName], [ProductTypeID], [Rate], [ProductImage]
+                        FROM [Lazzatt].[dbo].[Product]
+                        WHERE ProductTypeID = @ID";
 
-            // Establish a connection to the database
-            SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString());
-            var sql = @"SELECT [ProductID]
-                              ,[ProductName]
-                              ,[ProductTypeID]
-                              ,[Rate]
-                              ,[ProductImage]
-                          FROM [Lazzatt].[dbo].[Product]
-                          WHERE ProductTypeID = @ID";
-            // Execute the query and retrieve the products using Dapper
-            productList = conn.Query<ProductResponse>(sql, new { ID = id }).ToList();
+                    //  productList = conn.Query<ProductResponse>(sql, new { ID = id }).ToList();
+                    var productList = await conn.QueryAsync<ProductResponse>(sql, new { ID = id });
 
-            return Ok(productList);
+                    return Ok(productList);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception and return an error response
+                string errorMessage = "An error occurred while retrieving the products";
+                HttpStatusCode statusCode = HttpStatusCode.InternalServerError;
+
+                // Additional error handling logic if needed
+                // For example, you can log the error or provide more specific error messages based on the exception type
+
+                return StatusCode((int)statusCode, errorMessage);
+            }
         }
+
 
         // POST api/<ProductTypeController>
         [HttpPost]
         public async Task<IActionResult> PostType(ProductType productType)
         {
-            SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString());
-
-            var sql = @"INSERT INTO [Lazzatt].[dbo].[ProductType]
-                                ([ProductTypeName]
-                              ,[Description]
-                              ,[DontShowOnSite]
-                              ,[WebSiteDisPlayOrder]
-                              ,[ProducTypeImage]
-                              ,[OfferTitle]
-                              ,[OfferPercent]
-                              ,[ProductCategoryID])
-                        VALUES (@ProductTypeName, @Description, @DontShowOnSite, @WebSiteDisPlayOrder, @ProducTypeImage, @OfferTitle, @OfferPercent, @ProductCategoryID)";
-
-            var newProductType = new ProductType()
+            try
             {
-                ProductTypeName = productType.ProductTypeName,
-                Description = productType.Description,
-                DontShowOnSite = productType.DontShowOnSite,
-                WebSiteDisPlayOrder = productType.WebSiteDisPlayOrder,
-                ProducTypeImage = productType.ProducTypeImage,
-                OfferTitle = productType.OfferTitle,
-                OfferPercent = productType.OfferPercent,
-                ProductCategoryID = productType.ProductCategoryID
-            };
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
+                {
+                    var sql = @"INSERT INTO [Lazzatt].[dbo].[ProductType]
+                        ([ProductTypeName], [Description], [DontShowOnSite], [WebSiteDisPlayOrder],
+                         [ProducTypeImage], [OfferTitle], [OfferPercent], [ProductCategoryID])
+                        VALUES (@ProductTypeName, @Description, @DontShowOnSite, @WebSiteDisPlayOrder,
+                                @ProducTypeImage, @OfferTitle, @OfferPercent, @ProductCategoryID)";
 
-            var result = await conn.ExecuteAsync(sql, newProductType);
-            return Ok("Data Inserted");
+                    var newProductType = new ProductType()
+                    {
+                        ProductTypeName = productType.ProductTypeName,
+                        Description = productType.Description,
+                        DontShowOnSite = productType.DontShowOnSite,
+                        WebSiteDisPlayOrder = productType.WebSiteDisPlayOrder,
+                        ProducTypeImage = productType.ProducTypeImage,
+                        OfferTitle = productType.OfferTitle,
+                        OfferPercent = productType.OfferPercent,
+                        ProductCategoryID = productType.ProductCategoryID
+                    };
+
+                    await conn.ExecuteAsync(sql, newProductType);
+
+                    return Ok("Data Inserted");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception and return an error response
+                string errorMessage = "An error occurred while inserting the product type";
+                HttpStatusCode statusCode = HttpStatusCode.InternalServerError;
+
+                // Additional error handling logic if needed
+                // For example, you can log the error or provide more specific error messages based on the exception type
+
+                return StatusCode((int)statusCode, errorMessage);
+            }
         }
 
         // PUT api/<ProductTypeController>/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProductType(int id, ProductType productType)
         {
-            // Check if the product exists with the given ID
-            bool productExists = CheckIfProductTypeExists(id);
-
-            if (!productExists)
+            try
             {
-                return NotFound("Type not Found");
-            }
+                // Check if the product exists with the given ID
+                bool productExists = await CheckIfProductTypeExistsAsync(id);
 
-            // Establish a connection to the database
-            using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
-            {
-                var sql = @"UPDATE [Lazzatt].[dbo].[ProductType] 
-                                     SET ProductTypeName = @ProductTypeName,
-                                         Description = @Description,
-                                         DontShowOnSite = @DontShowOnSite,
-                                         WebSiteDisPlayOrder = @WebSiteDisPlayOrder,
-                                         ProducTypeImage = @ProducTypeImage,
-                                         OfferTitle = @OfferTitle,
-                                         OfferPercent = @OfferPercent,
-                                         ProductCategoryID = @ProductCategoryID
-                                     WHERE ProductTypeID = @ProductTypeID";
-
-                var newProductType = new ProductType()
+                if (!productExists)
                 {
-                    ProductTypeName = productType.ProductTypeName,
-                    Description = productType.Description,
-                    DontShowOnSite = productType.DontShowOnSite,
-                    WebSiteDisPlayOrder = productType.WebSiteDisPlayOrder,
-                    ProducTypeImage = productType.ProducTypeImage,
-                    OfferTitle = productType.OfferTitle,
-                    OfferPercent = productType.OfferPercent,
-                    ProductCategoryID = productType.ProductCategoryID,
-                    ProductTypeID = id
-                };
+                    return NotFound("Type not Found");
+                }
 
-                var result = await conn.ExecuteAsync(sql, newProductType);
+                // Establish a connection to the database
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
+                {
+                    var sql = @"UPDATE [Lazzatt].[dbo].[ProductType]
+                        SET ProductTypeName = @ProductTypeName,
+                            Description = @Description,
+                            DontShowOnSite = @DontShowOnSite,
+                            WebSiteDisPlayOrder = @WebSiteDisPlayOrder,
+                            ProducTypeImage = @ProducTypeImage,
+                            OfferTitle = @OfferTitle,
+                            OfferPercent = @OfferPercent,
+                            ProductCategoryID = @ProductCategoryID
+                        WHERE ProductTypeID = @ProductTypeID";
+
+                    var updatedProductType = new ProductType()
+                    {
+                        ProductTypeID = id,
+                        ProductTypeName = productType.ProductTypeName,
+                        Description = productType.Description,
+                        DontShowOnSite = productType.DontShowOnSite,
+                        WebSiteDisPlayOrder = productType.WebSiteDisPlayOrder,
+                        ProducTypeImage = productType.ProducTypeImage,
+                        OfferTitle = productType.OfferTitle,
+                        OfferPercent = productType.OfferPercent,
+                        ProductCategoryID = productType.ProductCategoryID
+                    };
+
+                    await conn.ExecuteAsync(sql, updatedProductType);
+                }
+
+                return Ok("Data Updated");
             }
-            return Ok("Data Updated");
+            catch (Exception ex)
+            {
+                // Handle the exception and return an error response
+                string errorMessage = "An error occurred while updating the product type";
+                HttpStatusCode statusCode = HttpStatusCode.InternalServerError;
+
+                // Additional error handling logic if needed
+                // For example, you can log the error or provide more specific error messages based on the exception type
+
+                return StatusCode((int)statusCode, errorMessage);
+            }
         }
+
 
         // DELETE api/<ProductTypeController>/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProductType(int id)
         {
-            // Check if the product exists with the given ID
-            bool productExists = CheckIfProductTypeExists(id);
-
-            if (!productExists)
+            try
             {
-                return NotFound();
-            }
+                // Check if the product exists with the given ID
+                bool productExists = await CheckIfProductTypeExistsAsync(id);
 
-            // Establish a connection to the database
-            using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
+                if (!productExists)
+                {
+                    return NotFound();
+                }
+
+                // Establish a connection to the database
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
+                {
+                    var sql = @"DELETE FROM [Lazzatt].[dbo].[ProductType]
+                        WHERE ProductTypeID = @ProductTypeID";
+
+                    await conn.ExecuteAsync(sql, new { ProductTypeID = id });
+
+                    return Ok("Product Type Deleted");
+                }
+            }
+            catch (Exception ex)
             {
-                var sql = @"DELETE FROM [Lazzatt].[dbo].[Product]
-                               WHERE ProductTypeID = @ProductTypeID";
+                // Handle the exception and return an error response
+                string errorMessage = "An error occurred while deleting the product";
+                HttpStatusCode statusCode = HttpStatusCode.InternalServerError;
 
-                var result = await conn.ExecuteAsync(sql, new { ProductTypeID = id });
+                // Additional error handling logic if needed
+                // For example, you can log the error or provide more specific error messages based on the exception type
+
+                return StatusCode((int)statusCode, errorMessage);
             }
-            return Ok("Product Deleted");
         }
 
         // Helper method to check if the productType exists with the given ID
-        private bool CheckIfProductTypeExists(int id)
+        private async Task<bool> CheckIfProductTypeExistsAsync(int id)
         {
-            // Establish a connection to the database
-            using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
+            try
             {
-                conn.Open();
-
-                // Prepare the SQL query to check if the product exists
-                var query = "SELECT COUNT(*) FROM ProductType WHERE ProductTypeID = @ID";
-
-                using (var command = new SqlCommand(query, conn))
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
                 {
-                    // Set the parameter for the query
-                    command.Parameters.AddWithValue("@ID", id);
+                    // Prepare the SQL query to check if the product exists
+                    var query = "SELECT COUNT(*) FROM ProductType WHERE ProductTypeID = @ID";
 
-                    // Execute the query to get the count of matching products
-                    int count = (int)command.ExecuteScalar();
+                    // Execute the query and retrieve the count asynchronously using Dapper
+                    int count = await conn.ExecuteScalarAsync<int>(query, new { ID = id });
 
                     // If the count is greater than 0, the product exists
                     return count > 0;
                 }
             }
+            catch (Exception ex)
+            {
+                // Handle the exception, log the error, and return false (assuming product doesn't exist)
+                // For example:
+                // logger.LogError(ex, "Error checking if product type exists");
+                return false;
+            }
         }
-
     }
     public class ProductTypeResponse
     {

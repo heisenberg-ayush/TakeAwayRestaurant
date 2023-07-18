@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Dapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using PointOfSale.Models;
 using System.Data.SqlClient;
@@ -17,18 +18,27 @@ namespace PointOfSale.Controllers
 
         [HttpPost]
         [Route("registration")]
-        public string registration(Registration registration)
-
+        public async Task<string> Registration(Registration registration)
         {
-            SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("PointOfSale").ToString());
-            SqlCommand cmd = new SqlCommand("INSERT INTO registrations(OperatorName, Password) VALUES ('" + registration.OperatorName + "', '" + registration.Password + "')", conn);
-            conn.Open();
-            int i = cmd.ExecuteNonQuery();
-            conn.Close();
-            if (i > 0)
-                return "Data Inserted";
-            else
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("PointOfSale").ToString()))
+                {
+                    string sql = "INSERT INTO registrations (OperatorName, Password) VALUES (@OperatorName, @Password)";
+                    var parameters = new { OperatorName = registration.OperatorName, Password = registration.Password };
+
+                    await conn.ExecuteAsync(sql, parameters);
+
+                    return "Data Inserted";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception, log the error, or provide a specific error message
+                // based on your application's requirements
                 return "Error";
+            }
         }
+
     }
 }
