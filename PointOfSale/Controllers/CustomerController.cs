@@ -56,7 +56,8 @@ namespace PointOfSale.Controllers
             {
                 using (var conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
                 {
-                    var sql = @"SELECT [CustomerName]
+                    var sql = @"SELECT [CustomerID]
+                            ,[CustomerName]
                             ,[CustomerMobile]
                             ,[Email]
                         FROM [Lazzatt].[dbo].[Customer]
@@ -278,6 +279,7 @@ namespace PointOfSale.Controllers
 
     public class CustomerResponse
     {
+        public int CustomerID { get; set; }
         public string CustomerName { get; set; }
         public string CustomerMobile { get; set; }
         public string Email { get; set; }

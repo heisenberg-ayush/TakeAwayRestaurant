@@ -10,50 +10,63 @@ namespace PointOfSale.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CartController : ControllerBase
-    {
+    public class CartDetailController : ControllerBase
+    { 
         private readonly IConfiguration _config;
-        public CartController(IConfiguration config)
+        public CartDetailController(IConfiguration config)
         {
             _config = config;
         }
 
-        /*// GET: api/<CartController>
+        // GET: api/<CartDetailController>
         [HttpGet]
         public IEnumerable<string> Get()
         {
             return new string[] { "value1", "value2" };
         }
 
-        // GET api/<CartController>/5
+        // GET api/<CartDetailController>/5
         [HttpGet("{id}")]
         public string Get(int id)
         {
             return "value";
-        }*/
+        }
 
-        // POST api/<CartController>
-        // takes customer id
+        // POST api/<CartDetailController>
+        // Takes CartID from Frontend
         [HttpPost]
-        public async Task<IActionResult> Post(int id)
+        public async Task<IActionResult> Post(int id, CartDetail cart)
         {
             try
             {
                 using (var conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
                 {
-                    //First fill the Cart Database then Cart 
-                    var sql = @"INSERT INTO [Lazzatt].[dbo].[Cart]
-                                       ([CustomerID])
+                    var sql = @"INSERT INTO [Lazzatt].[dbo].[CartDetail]
+                                       ([CartID]
+                                       ,[DetailSerial]
+                                       ,[ProductID]
+                                       ,[Quantity]
+                                       ,[UnitPrice]
+                                       ,[Amount]
+                                       ,[Remarks])
                                  VALUES
-                                       (@CustomerID);
-                                 SELECT CAST(SCOPE_IDENTITY() as int);";
+                                       (@CartID, @DetailSerial, @ProductID, @Quantity, @UnitPrice, @Amount, @Remarks);
+                                 SELECT CAST(SCOPE_IDENTITY() as int)";
 
-                    await conn.ExecuteAsync(sql, new { CustomerID = id });
+                    var newCart = new CartDetail()
+                    {
+                        CartID = id,
+                        DetailSerial = cart.DetailSerial,
+                        ProductID = cart.ProductID,
+                        Quantity = cart.Quantity,
+                        UnitPrice = cart.UnitPrice,
+                        Amount = cart.Amount,
+                        Remarks = cart.Remarks
+                    };
 
-                    // Get CustomerID
-                    int newId = await conn.QuerySingleAsync<int>(sql, new { CustomerID = id });
+                    await conn.ExecuteAsync(sql, newCart);
 
-                    return Ok(newId);
+                    return Ok("Data Inserted");
                 }
             }
             catch (Exception ex)
@@ -63,40 +76,40 @@ namespace PointOfSale.Controllers
             }
         }
 
-        // PUT api/<CartController>/5
+        // PUT api/<CartDetailController>/5
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
         {
         }
 
-        // DELETE api/<CartController>/5
+        // DELETE api/<CartDetailController>/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 // Check if the cart detail exists with the given ID
-                bool cartExists = await CheckIfCartExistsAsync(id);
+                bool cartDetailExists = await CheckIfCartDetailExistsAsync(id);
 
-                if (!cartExists)
+                if (!cartDetailExists)
                 {
-                    return NotFound("Cart not Found");
+                    return NotFound("Cart Detail not Found");
                 }
 
                 using (SqlConnection conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
                 {
-                    var sql = @"DELETE FROM [Lazzatt].[dbo].[Cart]
-                        WHERE CartID = @CartID";
+                    var sql = @"DELETE FROM [Lazzatt].[dbo].[CartDetail]
+                        WHERE CartDetailID = @CartDetailID";
 
-                    await conn.ExecuteAsync(sql, new { CartID = id });
+                    await conn.ExecuteAsync(sql, new { CartDetailID = id });
 
-                    return Ok("Cart Deleted");
+                    return Ok("Cart Detail Deleted");
                 }
             }
             catch (Exception ex)
             {
                 // Handle the exception and return an error response
-                string errorMessage = "An error occurred while deleting the Cart";
+                string errorMessage = "An error occurred while deleting the Cart Detail";
                 HttpStatusCode statusCode = HttpStatusCode.InternalServerError;
 
                 // Additional error handling logic if needed
@@ -106,27 +119,27 @@ namespace PointOfSale.Controllers
             }
         }
 
-        private async Task<bool> CheckIfCartExistsAsync(int id)
+        private async Task<bool> CheckIfCartDetailExistsAsync(int id)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
                 {
-                    // Prepare the SQL query to check if the cart exists
-                    var query = "SELECT COUNT(*) FROM Cart WHERE CartID = @ID";
+                    // Prepare the SQL query to check if the cart detail exists
+                    var query = "SELECT COUNT(*) FROM CartDetail WHERE CartDetailID = @ID";
 
                     // Execute the query and retrieve the count asynchronously using Dapper
                     int count = await conn.ExecuteScalarAsync<int>(query, new { ID = id });
 
-                    // If the count is greater than 0, the cart exists
+                    // If the count is greater than 0, the cart detail exists
                     return count > 0;
                 }
             }
             catch (Exception ex)
             {
-                // Handle the exception, log the error, and return false (assuming cart doesn't exist)
+                // Handle the exception, log the error, and return false (assuming cart detail doesn't exist)
                 // For example:
-                // logger.LogError(ex, "Error checking if cart exists");
+                // logger.LogError(ex, "Error checking if cart detail exists");
                 return false;
             }
         }
