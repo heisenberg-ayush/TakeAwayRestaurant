@@ -60,7 +60,6 @@ namespace PointOfSale.Controllers
                 using (var conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
                 {
                     var sql = @"SELECT [AddressID]
-                              ,[CustomerID]
                               ,[FriendlyName]
                               ,[Address1]
                               ,[Address2]
@@ -69,7 +68,6 @@ namespace PointOfSale.Controllers
                               ,[Latitude]
                               ,[Longitude]
                               ,[Landmark]
-                              ,[Discontinued]
                           FROM [Lazzatt].[dbo].[CustomerAddresses]
                           WHERE CustomerID = @ID";
 

@@ -58,30 +58,11 @@ namespace PointOfSale.Controllers
                 {
                     var sql = @"SELECT [CustomerName]
                             ,[CustomerMobile]
-                            ,[GSTIN]
                             ,[Email]
-                            ,[EarnPoints]
-                            ,[RedeemPoints]
-                            ,[HasShoppingCartItems]
-                            ,[RequireReLogin]
-                            ,[FailedLoginAttempts]
-                            ,[CannotLoginUntilDateUtc]
-                            ,[IsInactive]
-                            ,[CreatedOn]
-                            ,[LastLoginDate]
-                            ,[LastActivityDate]
-                            ,[AdminComment]
-                            ,[AuthenticationType]
-                            ,[CustomerGender]
-                            ,[CustomerDOB]
-                            ,[CustomerAnniversary]
-                            ,[CustomerType]
-                            ,[FCMToken]
-                            ,[IsOnlineCustomer]
                         FROM [Lazzatt].[dbo].[Customer]
                         WHERE CustomerID = @ID";
 
-                    var customer = await conn.QueryFirstOrDefaultAsync<Customer>(sql, new { ID = id });
+                    var customer = await conn.QueryFirstOrDefaultAsync<CustomerResponse>(sql, new { ID = id });
 
                     if (customer == null)
                     {
@@ -293,5 +274,12 @@ namespace PointOfSale.Controllers
                 return false;
             }
         }
+    }
+
+    public class CustomerResponse
+    {
+        public string CustomerName { get; set; }
+        public string CustomerMobile { get; set; }
+        public string Email { get; set; }
     }
 }
