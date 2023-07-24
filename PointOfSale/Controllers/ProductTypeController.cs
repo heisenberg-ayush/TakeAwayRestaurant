@@ -50,7 +50,7 @@ namespace PointOfSale.Controllers
         }
 
 
-        // GET api/<ProductController>/5
+        // GET api/<ProductTypeController>/5
         // get all products with the given productTypeId
 
         [HttpGet("{id}")]

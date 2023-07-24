@@ -19,8 +19,8 @@ namespace PointOfSale.Controllers
             _config = config;
         }
 
-        // GET: api/<CustomerValidateController>
-        [HttpGet]
+        // POST: api/<CustomerValidateController>
+        [HttpPost]
         public async Task<IActionResult> ValidateMobile(string customerMobile)
         {
             try

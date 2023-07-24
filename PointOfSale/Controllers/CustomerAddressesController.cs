@@ -61,6 +61,7 @@ namespace PointOfSale.Controllers
                 {
                     var sql = @"SELECT [AddressID]
                               ,[FriendlyName]
+                              ,[CustomerID]
                               ,[Address1]
                               ,[Address2]
                               ,[PostalCode]

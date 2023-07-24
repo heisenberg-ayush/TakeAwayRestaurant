@@ -18,19 +18,35 @@ namespace PointOfSale.Controllers
             _config = config;
         }
 
-        /*// GET: api/<CartController>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
         // GET api/<CartController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
-            return "value";
-        }*/
+            try
+            {
+                using (var conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
+                {
+                    var sql = @"SELECT [CartID]
+                          FROM [Lazzatt].[dbo].[Cart]
+                          WHERE CustomerID = @ID
+                          ORDER BY [CartID] DESC";
+
+                    var cartID = await conn.QueryFirstOrDefaultAsync<int>(sql, new { ID = id });
+
+                    if (cartID == null)
+                    {
+                        return NotFound(); // Return 404 if cart is not found
+                    }
+
+                    return Ok(cartID);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception appropriately, log the error, or return a specific error response
+                return StatusCode(500, "An error occurred while retrieving cart data.");
+            }
+        }
 
         // POST api/<CartController>
         // takes customer id
@@ -63,13 +79,14 @@ namespace PointOfSale.Controllers
             }
         }
 
-        // PUT api/<CartController>/5
+        /*// PUT api/<CartController>/5
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
         {
-        }
+        }*/
 
         // DELETE api/<CartController>/5
+        // takes CustomerID
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -86,9 +103,10 @@ namespace PointOfSale.Controllers
                 using (SqlConnection conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
                 {
                     var sql = @"DELETE FROM [Lazzatt].[dbo].[Cart]
-                        WHERE CartID = @CartID";
+                        WHERE CustomerID = @CustomerID
+                        ORDER BY [CartID] DESC";
 
-                    await conn.ExecuteAsync(sql, new { CartID = id });
+                    await conn.ExecuteAsync(sql, new { CustomerID = id });
 
                     return Ok("Cart Deleted");
                 }
@@ -113,7 +131,7 @@ namespace PointOfSale.Controllers
                 using (SqlConnection conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
                 {
                     // Prepare the SQL query to check if the cart exists
-                    var query = "SELECT COUNT(*) FROM Cart WHERE CartID = @ID";
+                    var query = "SELECT COUNT(*) FROM Cart WHERE CustomerID = @ID";
 
                     // Execute the query and retrieve the count asynchronously using Dapper
                     int count = await conn.ExecuteScalarAsync<int>(query, new { ID = id });

@@ -18,20 +18,41 @@ namespace PointOfSale.Controllers
             _config = config;
         }
 
-        // GET: api/<CartDetailController>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
         // GET api/<CartDetailController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
-            return "value";
-        }
+            try
+            {
+                using (var conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
+                {
+                    var sql = @"SELECT [CartDetailID]
+                              ,[DetailSerial]
+                              ,[ProductID]
+                              ,[Quantity]
+                              ,[UnitPrice]
+                              ,[Amount]
+                              ,[Remarks]
+                          FROM [Lazzatt].[dbo].[CartDetail]
+                          WHERE CartID = @ID";
 
+                    var cartDetailList = await conn.QueryAsync<CartDetail>(sql, new { ID = id });
+
+                    if (cartDetailList == null)
+                    {
+                        return NotFound(); // Return 404 if cart is not found
+                    }
+
+                    return Ok(cartDetailList);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception appropriately, log the error, or return a specific error response
+                return StatusCode(500, "An error occurred while retrieving cart data.");
+            }
+        }
+        
         // POST api/<CartDetailController>
         // Takes CartID from Frontend
         [HttpPost]
@@ -50,8 +71,7 @@ namespace PointOfSale.Controllers
                                        ,[Amount]
                                        ,[Remarks])
                                  VALUES
-                                       (@CartID, @DetailSerial, @ProductID, @Quantity, @UnitPrice, @Amount, @Remarks);
-                                 SELECT CAST(SCOPE_IDENTITY() as int)";
+                                       (@CartID, @DetailSerial, @ProductID, @Quantity, @UnitPrice, @Amount, @Remarks);";
 
                     var newCart = new CartDetail()
                     {
@@ -74,12 +94,6 @@ namespace PointOfSale.Controllers
                 // Handle the exception appropriately, log the error, or return a specific error response
                 return StatusCode(500, "An error occurred while inserting customer data.");
             }
-        }
-
-        // PUT api/<CartDetailController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
         }
 
         // DELETE api/<CartDetailController>/5
