@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using PointOfSale.Models;
+using System.Data;
 using System.Data.SqlClient;
 using System.Net;
 
@@ -49,9 +50,31 @@ namespace PointOfSale.Controllers
         }
 
         // POST api/<CartController>
-        // takes customer id
+        // USING PROCEDURE
         [HttpPost]
-        public async Task<IActionResult> Post(int id)
+        public async Task<IActionResult> Post(int pID, int cID, int quantity, int amt)
+        {
+            using (var conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
+            {
+                // Call the stored procedure using Dapper
+                var result = await conn.QueryAsync<CustomerOrder>("API_AddToCart",
+                new
+                {
+                    ProductID = pID,
+                    CustomerID = cID,
+                    Quantity = quantity,
+                    Amount = amt
+                },
+                    commandType: CommandType.StoredProcedure);
+
+                // Handle the result or return it as needed
+                return Ok(result);
+            }
+        }
+
+        //WITHOUT USING PROCEDURE
+        // takes customer id
+        /*public async Task<IActionResult> Post(int id)
         {
             try
             {
@@ -64,8 +87,6 @@ namespace PointOfSale.Controllers
                                        (@CustomerID);
                                  SELECT CAST(SCOPE_IDENTITY() as int);";
 
-                    await conn.ExecuteAsync(sql, new { CustomerID = id });
-
                     // Get CustomerID
                     int newId = await conn.QuerySingleAsync<int>(sql, new { CustomerID = id });
 
@@ -77,7 +98,7 @@ namespace PointOfSale.Controllers
                 // Handle the exception appropriately, log the error, or return a specific error response
                 return StatusCode(500, "An error occurred while inserting customer data.");
             }
-        }
+        }*/
 
         /*// PUT api/<CartController>/5
         [HttpPut("{id}")]

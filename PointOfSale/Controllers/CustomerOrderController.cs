@@ -1,8 +1,10 @@
 ﻿using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using PointOfSale.Models;
+using System.Data;
 using System.Data.SqlClient;
 using System.Net;
+using System.Reflection.Metadata;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -53,8 +55,25 @@ namespace PointOfSale.Controllers
         }
 
         // POST api/<CustomerOrderController>
+        // USING PROCEDURE
         [HttpPost]
-        public async Task<IActionResult> Post(int id, CustomerOrder order)
+        public async Task<IActionResult> Post(int customerId, int addrID, int paymentMethod, int isRedeemPoint, string remarks, int orderType)
+        {
+            using (var conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
+            {
+                // Call the stored procedure using Dapper
+                var result = await conn.QueryAsync<CustomerOrder>("API_OrderPlaced",
+                new { CustomerID = customerId, AddressID = addrID, PaymentMethod = paymentMethod, 
+                    IsRedeemPoint = isRedeemPoint, Remarks = remarks, OrderType = orderType },
+                    commandType: CommandType.StoredProcedure);
+
+                // Handle the result or return it as needed
+                return Ok(result);
+            }
+        }
+
+        // WITHOUT USING PROCEDURE
+        /*public async Task<IActionResult> Post(int id, CustomerOrder order)
         {
             try
             {
@@ -145,12 +164,12 @@ namespace PointOfSale.Controllers
                     await conn.ExecuteAsync(insertSql, newOrder);
 
                     // Get CustomerOrderID
-                   /* int newId = await conn.QuerySingleAsync<int>(sql, newOrder);
+                   *//* int newId = await conn.QuerySingleAsync<int>(sql, newOrder);
                     var orderResponse = new CustomerOrderResponse()
                     {
                         CustomerCartID = cartID,
                         CustomerOrderID = newId,
-                    };*/
+                    };*//*
 
                     return Ok();
                 }
@@ -160,7 +179,7 @@ namespace PointOfSale.Controllers
                 // Handle the exception appropriately, log the error, or return a specific error response
                 return StatusCode(500, "An error occurred while inserting customer order data.");
             }
-        }
+        }*/
 
         /*// PUT api/<CustomerOrderController>/5
         //takes Customer ID
