@@ -29,6 +29,7 @@ namespace PointOfSale.Controllers
 
                 using (var conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
                 {
+                    await conn.OpenAsync();
                     var productList = await conn.QueryAsync<ProductResponse>(sql);
                     return Ok(productList);
                 }
@@ -55,6 +56,7 @@ namespace PointOfSale.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(_config.GetConnectionString("Lazzat").ToString()))
                 {
+                    await conn.OpenAsync();
                     var sql = @"SELECT [ProductID], [ProductName], [ProductTypeID], [Rate], [ProductImage]
                         FROM [Lazzatt].[dbo].[Product]
                         WHERE ProductID = @ID";

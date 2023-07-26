@@ -28,6 +28,7 @@ namespace PointOfSale.Controllers
                 // Establish a connection to the database
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
                 {
+                    await conn.OpenAsync();
                     var sql = @"SELECT [ProductCategoryID], [ProductCategoryName]
                         FROM [Lazzatt].[dbo].[ProductCategory]";
 
@@ -59,6 +60,7 @@ namespace PointOfSale.Controllers
                 // Establish a connection to the database
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("Lazzat").ToString()))
                 {
+                    await conn.OpenAsync();
                     var sql = @"SELECT [ProductTypeID], [ProductTypeName]
                         FROM [Lazzatt].[dbo].[ProductType]
                         WHERE ProductCategoryID = @ID";
